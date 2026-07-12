@@ -6,9 +6,15 @@ import {
   useFuelLogs,
 } from '#/hooks/use-fuel-expenses'
 import { useVehicles } from '#/hooks/use-vehicles'
+import { formatCurrency, formatDate } from '#/lib/format'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
 import { Input } from '#/components/ui/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '#/components/ui/input-group'
 import { Label } from '#/components/ui/label'
 import { NumberField } from '#/components/number-field'
 import {
@@ -29,6 +35,7 @@ import {
   TableRow,
 } from '#/components/ui/table'
 import { createFileRoute } from '@tanstack/react-router'
+import { SearchIcon } from 'lucide-react'
 
 export const Route = createFileRoute('/_protected/fuel_expenses')({
   component: RouteComponent,
@@ -157,9 +164,9 @@ function FuelLogsPanel({ vehicles }: { vehicles?: VehicleOption[] }) {
                 <TableCell className="font-medium">
                   {vehicleName(log.vehicle_id)}
                 </TableCell>
-                <TableCell>{log.log_date}</TableCell>
+                <TableCell>{formatDate(log.log_date)}</TableCell>
                 <TableCell>{log.liters}</TableCell>
-                <TableCell>${Number(log.cost).toFixed(2)}</TableCell>
+                <TableCell>{formatCurrency(log.cost)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -170,7 +177,8 @@ function FuelLogsPanel({ vehicles }: { vehicles?: VehicleOption[] }) {
 }
 
 function ExpensesPanel({ vehicles }: { vehicles?: VehicleOption[] }) {
-  const { data, isLoading, isError } = useExpenses()
+  const [search, setSearch] = useState('')
+  const { data, isLoading, isError } = useExpenses(search)
   const createExpense = useCreateExpense()
 
   const [vehicleId, setVehicleId] = useState('')
@@ -252,12 +260,25 @@ function ExpensesPanel({ vehicles }: { vehicles?: VehicleOption[] }) {
       </form>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
+      <InputGroup className="w-56">
+        <InputGroupAddon>
+          <SearchIcon />
+        </InputGroupAddon>
+        <InputGroupInput
+          placeholder="Search expenses..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </InputGroup>
+
       {isError && (
         <p className="text-sm text-destructive">Failed to load expenses.</p>
       )}
       {isLoading && <Skeleton className="h-48 w-full" />}
       {data && data.length === 0 && (
-        <p className="text-sm text-muted-foreground">No expenses yet.</p>
+        <p className="text-sm text-muted-foreground">
+          {search ? 'No expenses match your search.' : 'No expenses yet.'}
+        </p>
       )}
       {data && data.length > 0 && (
         <Table>
@@ -277,8 +298,8 @@ function ExpensesPanel({ vehicles }: { vehicles?: VehicleOption[] }) {
                   {vehicleName(expense.vehicle_id)}
                 </TableCell>
                 <TableCell>{expense.category}</TableCell>
-                <TableCell>${Number(expense.amount).toFixed(2)}</TableCell>
-                <TableCell>{expense.expense_date}</TableCell>
+                <TableCell>{formatCurrency(expense.amount)}</TableCell>
+                <TableCell>{formatDate(expense.expense_date)}</TableCell>
                 <TableCell>{expense.notes ?? '—'}</TableCell>
               </TableRow>
             ))}

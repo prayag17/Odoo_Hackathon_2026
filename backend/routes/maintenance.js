@@ -1,13 +1,14 @@
 import { Router } from "express";
 import { pool } from "../db.js";
 import { requireRole } from "../middleware/requireRole.js";
+import { toPrefixTsQuery } from "../lib/search.js";
 
 const router = Router();
 
-// GET /api/maintenance?vehicle_id=&status=
+// GET /api/maintenance?vehicle_id=&status=&q=search+terms
 router.get("/", async (req, res) => {
   try {
-    const { vehicle_id, status } = req.query;
+    const { vehicle_id, status, q } = req.query;
     const conditions = [];
     const values = [];
 
@@ -18,6 +19,13 @@ router.get("/", async (req, res) => {
     if (status) {
       values.push(status);
       conditions.push(`status = $${values.length}`);
+    }
+    const tsQuery = q ? toPrefixTsQuery(q) : "";
+    if (tsQuery) {
+      values.push(tsQuery);
+      conditions.push(
+        `to_tsvector('english', description || ' ' || status) @@ to_tsquery('english', $${values.length})`,
+      );
     }
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";

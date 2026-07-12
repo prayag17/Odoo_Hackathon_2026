@@ -51,10 +51,17 @@ export const auth = betterAuth({
     },
   },
   plugins: [dash()],
-  // socialProviders: {
-  //     github: {
-  //         clientId: process.env.GITHUB_CLIENT_ID,
-  //         clientSecret: process.env.GITHUB_CLIENT_SECRET,
-  //     },
-  // },
+  socialProviders: {
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    },
+  },
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["github"], // Specify which providers can link automatically
+      // allowDifferentEmails: false, // Prevent linking profiles with differing emails
+    },
+  },
 });

@@ -9,6 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { Link, useRouterState } from "@tanstack/react-router"
 
 export function NavSecondary({
   items,
@@ -20,13 +21,18 @@ export function NavSecondary({
     icon: React.ReactNode
   }[]
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
+  const pathname = useRouterState({ select: (state) => state.location.pathname })
+
   return (
     <SidebarGroup {...props}>
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton render={<a href={item.url} />}>
+              <SidebarMenuButton
+                render={<Link to={item.url} />}
+                isActive={pathname === item.url}
+              >
                 {item.icon}
                 <span>{item.title}</span>
               </SidebarMenuButton>

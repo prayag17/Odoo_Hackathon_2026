@@ -71,18 +71,19 @@ export function useCreateFuelLog() {
   })
 }
 
-async function fetchExpenses(): Promise<Expense[]> {
-  const res = await fetch('/api/expenses', { credentials: 'include' })
+async function fetchExpenses(q?: string): Promise<Expense[]> {
+  const url = q ? `/api/expenses?q=${encodeURIComponent(q)}` : '/api/expenses'
+  const res = await fetch(url, { credentials: 'include' })
   if (!res.ok) {
     throw new Error('Failed to load expenses')
   }
   return res.json()
 }
 
-export function useExpenses() {
+export function useExpenses(q?: string) {
   return useQuery({
-    queryKey: ['expenses'],
-    queryFn: fetchExpenses,
+    queryKey: ['expenses', q ?? ''],
+    queryFn: () => fetchExpenses(q),
   })
 }
 

@@ -16,8 +16,6 @@ import {
 import {
   LayoutDashboardIcon,
   Settings2Icon,
-  CircleHelpIcon,
-  SearchIcon,
   TruckElectricIcon,
   UsersIcon,
   WrenchIcon,
@@ -70,16 +68,6 @@ const data = {
       title: 'Settings',
       url: '/settings',
       icon: <Settings2Icon />,
-    },
-    {
-      title: 'Get Help',
-      url: '#',
-      icon: <CircleHelpIcon />,
-    },
-    {
-      title: 'Search',
-      url: '#',
-      icon: <SearchIcon />,
     },
   ],
 }

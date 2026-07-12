@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button'
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -6,7 +5,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
-import { Link } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
 
 export function NavMain({
   items,
@@ -17,6 +16,8 @@ export function NavMain({
     icon?: React.ReactNode
   }[]
 }) {
+  const pathname = useRouterState({ select: (state) => state.location.pathname })
+
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -47,6 +48,7 @@ export function NavMain({
               <SidebarMenuButton
                 render={<Link to={item.url} className="" />}
                 tooltip={item.title}
+                isActive={pathname === item.url}
               >
                 {item.icon}
                 <span>{item.title}</span>

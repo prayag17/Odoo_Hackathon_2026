@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db.js";
 import { requireRole } from "../middleware/requireRole.js";
+import { toPrefixTsQuery } from "../lib/search.js";
 
 const router = Router();
 
@@ -12,6 +13,7 @@ const DRIVER_FIELDS = [
   "contact_number",
   "safety_score",
   "status",
+  "image",
 ];
 
 const SELECT_WITH_LICENSE_VALID = `
@@ -20,20 +22,30 @@ const SELECT_WITH_LICENSE_VALID = `
   FROM drivers
 `;
 
-// GET /api/drivers?status=Available
+// GET /api/drivers?status=Available&q=search+terms
 router.get("/", async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, q } = req.query;
+    const conditions = [];
+    const values = [];
 
     if (status) {
-      const result = await pool.query(
-        `${SELECT_WITH_LICENSE_VALID} WHERE status = $1 ORDER BY name`,
-        [status],
+      values.push(status);
+      conditions.push(`status = $${values.length}`);
+    }
+    const tsQuery = q ? toPrefixTsQuery(q) : "";
+    if (tsQuery) {
+      values.push(tsQuery);
+      conditions.push(
+        `to_tsvector('english', name || ' ' || license_number || ' ' || COALESCE(license_category, '')) @@ to_tsquery('english', $${values.length})`,
       );
-      return res.json(result.rows);
     }
 
-    const result = await pool.query(`${SELECT_WITH_LICENSE_VALID} ORDER BY name`);
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const result = await pool.query(
+      `${SELECT_WITH_LICENSE_VALID} ${where} ORDER BY name`,
+      values,
+    );
     res.json(result.rows);
   } catch (err) {
     console.error("GET /api/drivers failed:", err);
@@ -55,6 +67,7 @@ router.post(
         contact_number,
         safety_score,
         status,
+        image,
       } = req.body;
 
       if (!name || !license_number) {
@@ -65,8 +78,8 @@ router.post(
 
       const result = await pool.query(
         `INSERT INTO drivers
-          (name, license_number, license_category, license_expiry_date, contact_number, safety_score, status)
-         VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 'Available'))
+          (name, license_number, license_category, license_expiry_date, contact_number, safety_score, status, image)
+         VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 'Available'), $8)
          RETURNING *`,
         [
           name,
@@ -76,6 +89,7 @@ router.post(
           contact_number ?? null,
           safety_score ?? 100,
           status,
+          image ?? null,
         ],
       );
 

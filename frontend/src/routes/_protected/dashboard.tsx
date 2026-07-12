@@ -1,6 +1,7 @@
 import { type DashboardKpis, useDashboardKpis } from '#/hooks/use-dashboard'
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -16,6 +17,14 @@ import {
   Tooltip,
   XAxis,
 } from 'recharts'
+import {
+  ClockIcon,
+  GaugeIcon,
+  SendIcon,
+  TruckIcon,
+  UserCheckIcon,
+  WrenchIcon,
+} from 'lucide-react'
 
 export const Route = createFileRoute('/_protected/dashboard')({
   component: RouteComponent,
@@ -25,18 +34,57 @@ const KPI_CARDS: {
   key: keyof Omit<DashboardKpis, 'trend'>
   label: string
   suffix?: string
+  icon: React.ReactNode
+  accent: string
 }[] = [
-  { key: 'activeVehicles', label: 'Active Vehicles' },
-  { key: 'availableVehicles', label: 'Available Vehicles' },
-  { key: 'vehiclesInMaintenance', label: 'Vehicles in Maintenance' },
-  { key: 'activeTrips', label: 'Active Trips' },
-  { key: 'pendingTrips', label: 'Pending Trips' },
-  { key: 'driversOnDuty', label: 'Drivers On Duty' },
-  { key: 'fleetUtilization', label: 'Fleet Utilization', suffix: '%' },
+  {
+    key: 'activeVehicles',
+    label: 'Active Vehicles',
+    icon: <TruckIcon className="size-4" />,
+    accent: 'text-blue-600 dark:text-blue-400',
+  },
+  {
+    key: 'availableVehicles',
+    label: 'Available Vehicles',
+    icon: <TruckIcon className="size-4" />,
+    accent: 'text-emerald-600 dark:text-emerald-400',
+  },
+  {
+    key: 'vehiclesInMaintenance',
+    label: 'In Maintenance',
+    icon: <WrenchIcon className="size-4" />,
+    accent: 'text-amber-600 dark:text-amber-400',
+  },
+  {
+    key: 'activeTrips',
+    label: 'Active Trips',
+    icon: <SendIcon className="size-4" />,
+    accent: 'text-violet-600 dark:text-violet-400',
+  },
+  {
+    key: 'pendingTrips',
+    label: 'Pending Trips',
+    icon: <ClockIcon className="size-4" />,
+    accent: 'text-orange-600 dark:text-orange-400',
+  },
+  {
+    key: 'driversOnDuty',
+    label: 'Drivers On Duty',
+    icon: <UserCheckIcon className="size-4" />,
+    accent: 'text-teal-600 dark:text-teal-400',
+  },
+  {
+    key: 'fleetUtilization',
+    label: 'Fleet Utilization',
+    suffix: '%',
+    icon: <GaugeIcon className="size-4" />,
+    accent: 'text-pink-600 dark:text-pink-400',
+  },
 ]
 
 function RouteComponent() {
   const { data, isLoading, isError } = useDashboardKpis()
+  const trendTotal = data?.trend.reduce((sum, d) => sum + d.trips, 0) ?? 0
 
   return (
     <div className="flex flex-1 flex-col">
@@ -48,12 +96,15 @@ function RouteComponent() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
+          <div className="grid grid-cols-1 gap-4 px-4 sm:grid-cols-2 lg:px-6 @5xl/main:grid-cols-4">
             {isLoading &&
               KPI_CARDS.map((card) => (
                 <Card key={card.key} className="@container/card">
                   <CardHeader>
-                    <CardDescription>{card.label}</CardDescription>
+                    <CardDescription className="flex items-center gap-1.5">
+                      {card.icon}
+                      {card.label}
+                    </CardDescription>
                     <Skeleton className="h-8 w-20" />
                   </CardHeader>
                 </Card>
@@ -61,9 +112,17 @@ function RouteComponent() {
 
             {data &&
               KPI_CARDS.map((card) => (
-                <Card key={card.key} className="@container/card">
+                <Card
+                  key={card.key}
+                  className="@container/card overflow-hidden"
+                >
                   <CardHeader>
-                    <CardDescription>{card.label}</CardDescription>
+                    <CardDescription
+                      className={`flex items-center gap-1.5 font-medium ${card.accent}`}
+                    >
+                      {card.icon}
+                      {card.label}
+                    </CardDescription>
                     <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
                       {data[card.key]}
                       {card.suffix ?? ''}
@@ -77,7 +136,12 @@ function RouteComponent() {
             <Card className="@container/card">
               <CardHeader>
                 <CardTitle>Trip Volume</CardTitle>
-                <CardDescription>Trips created over the last 7 days</CardDescription>
+                <CardDescription>
+                  {trendTotal} trip{trendTotal === 1 ? '' : 's'} created over the last 7 days
+                </CardDescription>
+                <CardAction>
+                  <SendIcon className="size-4 text-muted-foreground" />
+                </CardAction>
               </CardHeader>
               <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
                 {isLoading ? (
@@ -91,7 +155,7 @@ function RouteComponent() {
                           <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.1} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid vertical={false} />
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
                       <XAxis
                         dataKey="date"
                         tickLine={false}
@@ -111,12 +175,19 @@ function RouteComponent() {
                             day: 'numeric',
                           })
                         }
+                        contentStyle={{
+                          borderRadius: 'var(--radius)',
+                          border: '1px solid var(--border)',
+                          background: 'var(--popover)',
+                          color: 'var(--popover-foreground)',
+                        }}
                       />
                       <Area
                         dataKey="trips"
                         type="natural"
                         fill="url(#fillTrips)"
                         stroke="var(--primary)"
+                        strokeWidth={2}
                       />
                     </AreaChart>
                   </ResponsiveContainer>

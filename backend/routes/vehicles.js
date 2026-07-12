@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db.js";
 import { requireRole } from "../middleware/requireRole.js";
+import { toPrefixTsQuery } from "../lib/search.js";
 
 const router = Router();
 
@@ -13,22 +14,33 @@ const VEHICLE_FIELDS = [
   "acquisition_cost",
   "status",
   "region",
+  "image",
 ];
 
-// GET /api/vehicles?status=Available
+// GET /api/vehicles?status=Available&q=search+terms
 router.get("/", async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, q } = req.query;
+    const conditions = [];
+    const values = [];
 
     if (status) {
-      const result = await pool.query(
-        "SELECT * FROM vehicles WHERE status = $1 ORDER BY name",
-        [status],
+      values.push(status);
+      conditions.push(`status = $${values.length}`);
+    }
+    const tsQuery = q ? toPrefixTsQuery(q) : "";
+    if (tsQuery) {
+      values.push(tsQuery);
+      conditions.push(
+        `to_tsvector('english', registration_number || ' ' || name || ' ' || type || ' ' || COALESCE(region, '')) @@ to_tsquery('english', $${values.length})`,
       );
-      return res.json(result.rows);
     }
 
-    const result = await pool.query("SELECT * FROM vehicles ORDER BY name");
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const result = await pool.query(
+      `SELECT * FROM vehicles ${where} ORDER BY name`,
+      values,
+    );
     res.json(result.rows);
   } catch (err) {
     console.error("GET /api/vehicles failed:", err);
@@ -48,6 +60,7 @@ router.post("/", requireRole("fleet_manager"), async (req, res) => {
       acquisition_cost,
       status,
       region,
+      image,
     } = req.body;
 
     if (!registration_number || !name || !type) {
@@ -58,8 +71,8 @@ router.post("/", requireRole("fleet_manager"), async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO vehicles
-        (registration_number, name, type, max_load_capacity, odometer, acquisition_cost, status, region)
-       VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 'Available'), $8)
+        (registration_number, name, type, max_load_capacity, odometer, acquisition_cost, status, region, image)
+       VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 'Available'), $8, $9)
        RETURNING *`,
       [
         registration_number,
@@ -70,6 +83,7 @@ router.post("/", requireRole("fleet_manager"), async (req, res) => {
         acquisition_cost ?? 0,
         status,
         region ?? null,
+        image ?? null,
       ],
     );
 

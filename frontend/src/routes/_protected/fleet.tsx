@@ -5,10 +5,16 @@ import {
   useUpdateVehicle,
   useVehicles,
 } from '#/hooks/use-vehicles'
+import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
 import { Input } from '#/components/ui/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '#/components/ui/input-group'
 import { Label } from '#/components/ui/label'
 import { NumberField } from '#/components/number-field'
 import {
@@ -36,7 +42,7 @@ import {
   TableRow,
 } from '#/components/ui/table'
 import { createFileRoute } from '@tanstack/react-router'
-import { PlusIcon } from 'lucide-react'
+import { PlusIcon, SearchIcon } from 'lucide-react'
 
 export const Route = createFileRoute('/_protected/fleet')({
   component: RouteComponent,
@@ -60,10 +66,12 @@ const emptyForm = {
   acquisition_cost: '',
   status: 'Available' as Vehicle['status'],
   region: '',
+  image: '',
 }
 
 function RouteComponent() {
-  const { data, isLoading, isError } = useVehicles()
+  const [search, setSearch] = useState('')
+  const { data, isLoading, isError } = useVehicles(undefined, search)
   const createVehicle = useCreateVehicle()
   const updateVehicle = useUpdateVehicle()
 
@@ -90,6 +98,7 @@ function RouteComponent() {
       acquisition_cost: String(vehicle.acquisition_cost),
       status: vehicle.status,
       region: vehicle.region ?? '',
+      image: vehicle.image ?? '',
     })
     setError(null)
     setOpen(true)
@@ -108,6 +117,7 @@ function RouteComponent() {
       acquisition_cost: Number(form.acquisition_cost) || 0,
       status: form.status,
       region: form.region || undefined,
+      image: form.image || undefined,
     }
 
     try {
@@ -127,17 +137,28 @@ function RouteComponent() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle>Fleet</CardTitle>
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger
-              render={
-                <Button size="sm" onClick={openCreate}>
-                  <PlusIcon data-icon="inline-start" />
-                  Add Vehicle
-                </Button>
-              }
-            />
+          <div className="flex items-center gap-2">
+            <InputGroup className="w-56">
+              <InputGroupAddon>
+                <SearchIcon />
+              </InputGroupAddon>
+              <InputGroupInput
+                placeholder="Search vehicles..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </InputGroup>
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger
+                render={
+                  <Button size="sm" onClick={openCreate}>
+                    <PlusIcon data-icon="inline-start" />
+                    Add Vehicle
+                  </Button>
+                }
+              />
             <SheetContent>
               <SheetHeader>
                 <SheetTitle>{editingId ? 'Edit Vehicle' : 'Add Vehicle'}</SheetTitle>
@@ -215,6 +236,21 @@ function RouteComponent() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="vehicle-image">Image URL</Label>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="size-10">
+                      <AvatarImage src={form.image || undefined} alt={form.name} />
+                      <AvatarFallback>{(form.name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <Input
+                      id="vehicle-image"
+                      placeholder="https://example.com/vehicle.png"
+                      value={form.image}
+                      onChange={(e) => setForm({ ...form, image: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5">
                   <Label>Status</Label>
                   <Select
                     value={form.status}
@@ -244,7 +280,8 @@ function RouteComponent() {
                 </SheetFooter>
               </form>
             </SheetContent>
-          </Sheet>
+            </Sheet>
+          </div>
         </CardHeader>
         <CardContent>
           {isError && (
@@ -253,13 +290,14 @@ function RouteComponent() {
           {isLoading && <Skeleton className="h-64 w-full" />}
           {data && data.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              No vehicles yet. Add your first vehicle to get started.
+              {search ? 'No vehicles match your search.' : 'No vehicles yet. Add your first vehicle to get started.'}
             </p>
           )}
           {data && data.length > 0 && (
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead />
                   <TableHead>Registration</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Type</TableHead>
@@ -272,6 +310,12 @@ function RouteComponent() {
               <TableBody>
                 {data.map((vehicle) => (
                   <TableRow key={vehicle.id}>
+                    <TableCell>
+                      <Avatar className="size-8">
+                        <AvatarImage src={vehicle.image ?? undefined} alt={vehicle.name} />
+                        <AvatarFallback>{vehicle.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                    </TableCell>
                     <TableCell className="font-medium">
                       {vehicle.registration_number}
                     </TableCell>

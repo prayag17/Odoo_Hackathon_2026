@@ -5,10 +5,17 @@ import {
   useDrivers,
   useUpdateDriver,
 } from '#/hooks/use-drivers'
+import { formatDate } from '#/lib/format'
+import { Avatar, AvatarFallback, AvatarImage } from '#/components/ui/avatar'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
 import { Input } from '#/components/ui/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '#/components/ui/input-group'
 import { Label } from '#/components/ui/label'
 import { NumberField } from '#/components/number-field'
 import {
@@ -36,7 +43,7 @@ import {
   TableRow,
 } from '#/components/ui/table'
 import { createFileRoute } from '@tanstack/react-router'
-import { PlusIcon } from 'lucide-react'
+import { PlusIcon, SearchIcon } from 'lucide-react'
 
 export const Route = createFileRoute('/_protected/drivers')({
   component: RouteComponent,
@@ -59,10 +66,12 @@ const emptyForm = {
   contact_number: '',
   safety_score: '100',
   status: 'Available' as Driver['status'],
+  image: '',
 }
 
 function RouteComponent() {
-  const { data, isLoading, isError } = useDrivers()
+  const [search, setSearch] = useState('')
+  const { data, isLoading, isError } = useDrivers(undefined, search)
   const createDriver = useCreateDriver()
   const updateDriver = useUpdateDriver()
 
@@ -88,6 +97,7 @@ function RouteComponent() {
       contact_number: driver.contact_number ?? '',
       safety_score: String(driver.safety_score),
       status: driver.status,
+      image: driver.image ?? '',
     })
     setError(null)
     setOpen(true)
@@ -105,6 +115,7 @@ function RouteComponent() {
       contact_number: form.contact_number || undefined,
       safety_score: Number(form.safety_score) || 0,
       status: form.status,
+      image: form.image || undefined,
     }
 
     try {
@@ -124,17 +135,28 @@ function RouteComponent() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle>Drivers</CardTitle>
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger
-              render={
-                <Button size="sm" onClick={openCreate}>
-                  <PlusIcon data-icon="inline-start" />
-                  Add Driver
-                </Button>
-              }
-            />
+          <div className="flex items-center gap-2">
+            <InputGroup className="w-56">
+              <InputGroupAddon>
+                <SearchIcon />
+              </InputGroupAddon>
+              <InputGroupInput
+                placeholder="Search drivers..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </InputGroup>
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger
+                render={
+                  <Button size="sm" onClick={openCreate}>
+                    <PlusIcon data-icon="inline-start" />
+                    Add Driver
+                  </Button>
+                }
+              />
             <SheetContent>
               <SheetHeader>
                 <SheetTitle>{editingId ? 'Edit Driver' : 'Add Driver'}</SheetTitle>
@@ -207,6 +229,21 @@ function RouteComponent() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="driver-image">Image URL</Label>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="size-10">
+                      <AvatarImage src={form.image || undefined} alt={form.name} />
+                      <AvatarFallback>{(form.name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <Input
+                      id="driver-image"
+                      placeholder="https://example.com/driver.png"
+                      value={form.image}
+                      onChange={(e) => setForm({ ...form, image: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5">
                   <Label>Status</Label>
                   <Select
                     value={form.status}
@@ -236,7 +273,8 @@ function RouteComponent() {
                 </SheetFooter>
               </form>
             </SheetContent>
-          </Sheet>
+            </Sheet>
+          </div>
         </CardHeader>
         <CardContent>
           {isError && (
@@ -245,13 +283,14 @@ function RouteComponent() {
           {isLoading && <Skeleton className="h-64 w-full" />}
           {data && data.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              No drivers yet. Add your first driver to get started.
+              {search ? 'No drivers match your search.' : 'No drivers yet. Add your first driver to get started.'}
             </p>
           )}
           {data && data.length > 0 && (
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead />
                   <TableHead>Name</TableHead>
                   <TableHead>License</TableHead>
                   <TableHead>Expiry</TableHead>
@@ -263,10 +302,16 @@ function RouteComponent() {
               <TableBody>
                 {data.map((driver) => (
                   <TableRow key={driver.id}>
+                    <TableCell>
+                      <Avatar className="size-8">
+                        <AvatarImage src={driver.image ?? undefined} alt={driver.name} />
+                        <AvatarFallback>{driver.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                    </TableCell>
                     <TableCell className="font-medium">{driver.name}</TableCell>
                     <TableCell>{driver.license_number}</TableCell>
                     <TableCell>
-                      {driver.license_expiry_date ?? '—'}{' '}
+                      {formatDate(driver.license_expiry_date)}{' '}
                       {!driver.license_valid && (
                         <Badge variant="destructive">Expired</Badge>
                       )}

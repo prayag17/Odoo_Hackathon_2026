@@ -9,6 +9,7 @@ export interface Driver {
   contact_number: string | null
   safety_score: number
   status: 'Available' | 'On Trip' | 'Off Duty' | 'Suspended'
+  image: string | null
   created_at: string
   license_valid: boolean
 }
@@ -18,19 +19,24 @@ export type DriverInput = Partial<Omit<Driver, 'id' | 'created_at' | 'license_va
   license_number: string
 }
 
-async function fetchDrivers(status?: string): Promise<Driver[]> {
-  const url = status ? `/api/drivers?status=${encodeURIComponent(status)}` : '/api/drivers'
-  const res = await fetch(url, { credentials: 'include' })
+async function fetchDrivers(status?: string, q?: string): Promise<Driver[]> {
+  const params = new URLSearchParams()
+  if (status) params.set('status', status)
+  if (q) params.set('q', q)
+  const query = params.toString()
+  const res = await fetch(`/api/drivers${query ? `?${query}` : ''}`, {
+    credentials: 'include',
+  })
   if (!res.ok) {
     throw new Error('Failed to load drivers')
   }
   return res.json()
 }
 
-export function useDrivers(status?: string) {
+export function useDrivers(status?: string, q?: string) {
   return useQuery({
-    queryKey: ['drivers', status ?? 'all'],
-    queryFn: () => fetchDrivers(status),
+    queryKey: ['drivers', status ?? 'all', q ?? ''],
+    queryFn: () => fetchDrivers(status, q),
   })
 }
 

@@ -29,18 +29,19 @@ export interface CompleteTripInput {
   fuel_consumed: number
 }
 
-async function fetchTrips(): Promise<Trip[]> {
-  const res = await fetch('/api/trips', { credentials: 'include' })
+async function fetchTrips(q?: string): Promise<Trip[]> {
+  const url = q ? `/api/trips?q=${encodeURIComponent(q)}` : '/api/trips'
+  const res = await fetch(url, { credentials: 'include' })
   if (!res.ok) {
     throw new Error('Failed to load trips')
   }
   return res.json()
 }
 
-export function useTrips() {
+export function useTrips(q?: string) {
   return useQuery({
-    queryKey: ['trips'],
-    queryFn: fetchTrips,
+    queryKey: ['trips', q ?? ''],
+    queryFn: () => fetchTrips(q),
   })
 }
 

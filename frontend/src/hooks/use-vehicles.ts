@@ -10,6 +10,7 @@ export interface Vehicle {
   acquisition_cost: number
   status: 'Available' | 'On Trip' | 'In Shop' | 'Retired'
   region: string | null
+  image: string | null
   created_at: string
 }
 
@@ -21,19 +22,24 @@ export type VehicleInput = Partial<
   type: string
 }
 
-async function fetchVehicles(status?: string): Promise<Vehicle[]> {
-  const url = status ? `/api/vehicles?status=${encodeURIComponent(status)}` : '/api/vehicles'
-  const res = await fetch(url, { credentials: 'include' })
+async function fetchVehicles(status?: string, q?: string): Promise<Vehicle[]> {
+  const params = new URLSearchParams()
+  if (status) params.set('status', status)
+  if (q) params.set('q', q)
+  const query = params.toString()
+  const res = await fetch(`/api/vehicles${query ? `?${query}` : ''}`, {
+    credentials: 'include',
+  })
   if (!res.ok) {
     throw new Error('Failed to load vehicles')
   }
   return res.json()
 }
 
-export function useVehicles(status?: string) {
+export function useVehicles(status?: string, q?: string) {
   return useQuery({
-    queryKey: ['vehicles', status ?? 'all'],
-    queryFn: () => fetchVehicles(status),
+    queryKey: ['vehicles', status ?? 'all', q ?? ''],
+    queryFn: () => fetchVehicles(status, q),
   })
 }
 

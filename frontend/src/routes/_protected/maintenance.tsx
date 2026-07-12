@@ -5,10 +5,16 @@ import {
   useMaintenanceLogs,
 } from '#/hooks/use-maintenance'
 import { useVehicles } from '#/hooks/use-vehicles'
+import { formatCurrency } from '#/lib/format'
 import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '#/components/ui/card'
 import { Input } from '#/components/ui/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '#/components/ui/input-group'
 import { Label } from '#/components/ui/label'
 import { NumberField } from '#/components/number-field'
 import {
@@ -36,14 +42,15 @@ import {
   TableRow,
 } from '#/components/ui/table'
 import { createFileRoute } from '@tanstack/react-router'
-import { PlusIcon } from 'lucide-react'
+import { PlusIcon, SearchIcon } from 'lucide-react'
 
 export const Route = createFileRoute('/_protected/maintenance')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { data, isLoading, isError } = useMaintenanceLogs()
+  const [search, setSearch] = useState('')
+  const { data, isLoading, isError } = useMaintenanceLogs(search)
   const { data: vehicles } = useVehicles()
   const createLog = useCreateMaintenanceLog()
   const closeLog = useCloseMaintenanceLog()
@@ -89,23 +96,34 @@ function RouteComponent() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-6 md:p-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle>Maintenance</CardTitle>
-          <Sheet
-            open={open}
-            onOpenChange={(next) => {
-              setOpen(next)
-              if (!next) resetForm()
-            }}
-          >
-            <SheetTrigger
-              render={
-                <Button size="sm">
-                  <PlusIcon data-icon="inline-start" />
-                  Open Maintenance
-                </Button>
-              }
-            />
+          <div className="flex items-center gap-2">
+            <InputGroup className="w-56">
+              <InputGroupAddon>
+                <SearchIcon />
+              </InputGroupAddon>
+              <InputGroupInput
+                placeholder="Search maintenance..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </InputGroup>
+            <Sheet
+              open={open}
+              onOpenChange={(next) => {
+                setOpen(next)
+                if (!next) resetForm()
+              }}
+            >
+              <SheetTrigger
+                render={
+                  <Button size="sm">
+                    <PlusIcon data-icon="inline-start" />
+                    Open Maintenance
+                  </Button>
+                }
+              />
             <SheetContent>
               <SheetHeader>
                 <SheetTitle>Open Maintenance Record</SheetTitle>
@@ -152,7 +170,8 @@ function RouteComponent() {
                 </SheetFooter>
               </form>
             </SheetContent>
-          </Sheet>
+            </Sheet>
+          </div>
         </CardHeader>
         <CardContent>
           {isError && (
@@ -161,7 +180,7 @@ function RouteComponent() {
           {isLoading && <Skeleton className="h-64 w-full" />}
           {data && data.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              No maintenance records yet.
+              {search ? 'No maintenance records match your search.' : 'No maintenance records yet.'}
             </p>
           )}
           {data && data.length > 0 && (
@@ -182,7 +201,7 @@ function RouteComponent() {
                       {vehicleName(log.vehicle_id)}
                     </TableCell>
                     <TableCell>{log.description}</TableCell>
-                    <TableCell>${Number(log.cost).toFixed(2)}</TableCell>
+                    <TableCell>{formatCurrency(log.cost)}</TableCell>
                     <TableCell>
                       <Badge variant={log.status === 'Open' ? 'secondary' : 'outline'}>
                         {log.status}

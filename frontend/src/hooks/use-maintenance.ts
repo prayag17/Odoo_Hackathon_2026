@@ -15,18 +15,19 @@ export interface MaintenanceInput {
   cost?: number
 }
 
-async function fetchMaintenanceLogs(): Promise<MaintenanceLog[]> {
-  const res = await fetch('/api/maintenance', { credentials: 'include' })
+async function fetchMaintenanceLogs(q?: string): Promise<MaintenanceLog[]> {
+  const url = q ? `/api/maintenance?q=${encodeURIComponent(q)}` : '/api/maintenance'
+  const res = await fetch(url, { credentials: 'include' })
   if (!res.ok) {
     throw new Error('Failed to load maintenance logs')
   }
   return res.json()
 }
 
-export function useMaintenanceLogs() {
+export function useMaintenanceLogs(q?: string) {
   return useQuery({
-    queryKey: ['maintenance'],
-    queryFn: fetchMaintenanceLogs,
+    queryKey: ['maintenance', q ?? ''],
+    queryFn: () => fetchMaintenanceLogs(q),
   })
 }
 

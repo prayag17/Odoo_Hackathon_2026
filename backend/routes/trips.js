@@ -1,23 +1,34 @@
 import { Router } from "express";
 import { pool } from "../db.js";
 import { requireRole } from "../middleware/requireRole.js";
+import { toPrefixTsQuery } from "../lib/search.js";
 
 const router = Router();
 
-// GET /api/trips?status=
+// GET /api/trips?status=&q=search+terms
 router.get("/", async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, q } = req.query;
+    const conditions = [];
+    const values = [];
 
     if (status) {
-      const result = await pool.query(
-        "SELECT * FROM trips WHERE status = $1 ORDER BY created_at DESC",
-        [status],
+      values.push(status);
+      conditions.push(`status = $${values.length}`);
+    }
+    const tsQuery = q ? toPrefixTsQuery(q) : "";
+    if (tsQuery) {
+      values.push(tsQuery);
+      conditions.push(
+        `to_tsvector('english', source || ' ' || destination || ' ' || status) @@ to_tsquery('english', $${values.length})`,
       );
-      return res.json(result.rows);
     }
 
-    const result = await pool.query("SELECT * FROM trips ORDER BY created_at DESC");
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const result = await pool.query(
+      `SELECT * FROM trips ${where} ORDER BY created_at DESC`,
+      values,
+    );
     res.json(result.rows);
   } catch (err) {
     console.error("GET /api/trips failed:", err);
