@@ -96,17 +96,17 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: '/settings' })}>
                 <CircleUserRoundIcon
                 />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem disabled>
                 <CreditCardIcon
                 />
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem disabled>
                 <BellIcon
                 />
                 Notifications
