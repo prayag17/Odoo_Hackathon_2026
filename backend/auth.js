@@ -1,13 +1,11 @@
 import { betterAuth } from "better-auth";
-import { Pool } from "pg";
 import { dash } from "@better-auth/infra";
+import { pool } from "./db.js";
 import { sendOnboardingEmail, sendVerificationEmail } from "./lib/mailer.js";
 
 export const auth = betterAuth({
   appName: "TransitOps",
-  database: new Pool({
-    connectionString: process.env.POSTGRESQL_URL,
-  }),
+  database: pool,
   trustedOrigins: ["http://localhost:3000"],
   session: {
     cookieCache: {
@@ -39,6 +37,16 @@ export const auth = betterAuth({
             console.error("Failed to send onboarding email:", err);
           }
         },
+      },
+    },
+  },
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "fleet_manager",
+        input: true,
       },
     },
   },
