@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as ProtectedTripsRouteImport } from './routes/_protected/trips'
+import { Route as ProtectedSettingsRouteImport } from './routes/_protected/settings'
 import { Route as ProtectedMaintenanceRouteImport } from './routes/_protected/maintenance'
 import { Route as ProtectedFuel_expensesRouteImport } from './routes/_protected/fuel_expenses'
 import { Route as ProtectedFleetRouteImport } from './routes/_protected/fleet'
@@ -43,6 +44,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
 const ProtectedTripsRoute = ProtectedTripsRouteImport.update({
   id: '/trips',
   path: '/trips',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedSettingsRoute = ProtectedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedMaintenanceRoute = ProtectedMaintenanceRouteImport.update({
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/fleet': typeof ProtectedFleetRoute
   '/fuel_expenses': typeof ProtectedFuel_expensesRoute
   '/maintenance': typeof ProtectedMaintenanceRoute
+  '/settings': typeof ProtectedSettingsRoute
   '/trips': typeof ProtectedTripsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/fleet': typeof ProtectedFleetRoute
   '/fuel_expenses': typeof ProtectedFuel_expensesRoute
   '/maintenance': typeof ProtectedMaintenanceRoute
+  '/settings': typeof ProtectedSettingsRoute
   '/trips': typeof ProtectedTripsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/_protected/fleet': typeof ProtectedFleetRoute
   '/_protected/fuel_expenses': typeof ProtectedFuel_expensesRoute
   '/_protected/maintenance': typeof ProtectedMaintenanceRoute
+  '/_protected/settings': typeof ProtectedSettingsRoute
   '/_protected/trips': typeof ProtectedTripsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/fleet'
     | '/fuel_expenses'
     | '/maintenance'
+    | '/settings'
     | '/trips'
     | '/auth/login'
     | '/auth/signup'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/fleet'
     | '/fuel_expenses'
     | '/maintenance'
+    | '/settings'
     | '/trips'
     | '/auth/login'
     | '/auth/signup'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/_protected/fleet'
     | '/_protected/fuel_expenses'
     | '/_protected/maintenance'
+    | '/_protected/settings'
     | '/_protected/trips'
     | '/auth/login'
     | '/auth/signup'
@@ -196,6 +208,13 @@ declare module '@tanstack/react-router' {
       path: '/trips'
       fullPath: '/trips'
       preLoaderRoute: typeof ProtectedTripsRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/settings': {
+      id: '/_protected/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof ProtectedSettingsRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/maintenance': {
@@ -250,6 +269,7 @@ interface ProtectedRouteChildren {
   ProtectedFleetRoute: typeof ProtectedFleetRoute
   ProtectedFuel_expensesRoute: typeof ProtectedFuel_expensesRoute
   ProtectedMaintenanceRoute: typeof ProtectedMaintenanceRoute
+  ProtectedSettingsRoute: typeof ProtectedSettingsRoute
   ProtectedTripsRoute: typeof ProtectedTripsRoute
 }
 
@@ -260,6 +280,7 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedFleetRoute: ProtectedFleetRoute,
   ProtectedFuel_expensesRoute: ProtectedFuel_expensesRoute,
   ProtectedMaintenanceRoute: ProtectedMaintenanceRoute,
+  ProtectedSettingsRoute: ProtectedSettingsRoute,
   ProtectedTripsRoute: ProtectedTripsRoute,
 }
 
