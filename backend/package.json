@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon --env-file=.env index.js",
+    "start": "node --env-file=.env index.js"
   },
   "keywords": [],
   "author": "",
@@ -18,6 +19,14 @@
   },
   "type": "module",
   "dependencies": {
-    "express": "^5.2.1"
+    "@better-auth/infra": "^0.3.6",
+    "better-auth": "^1.6.23",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "pg": "^8.22.0",
+    "resend": "^6.17.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }

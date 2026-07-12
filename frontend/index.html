@@ -4,10 +4,50 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <title>TransitOps</title>
+    <style>
+      #app-loading {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: oklch(1 0 0);
+      }
+    
+      #app-loading__spinner {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 9999px;
+        border: 3px solid oklch(0.925 0.005 214.3);
+        border-top-color: oklch(0.511 0.096 186.391);
+        animation: app-loading-spin 0.7s linear infinite;
+      }
+    
+      @keyframes app-loading-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    
+      @media (prefers-color-scheme: dark) {
+        #app-loading {
+          background: oklch(0.148 0.004 228.8);
+        }
+    
+        #app-loading__spinner {
+          border-color: oklch(0.319 0.007 215);
+          border-top-color: oklch(0.437 0.078 188.216);
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div id="app-loading">
+        <div id="app-loading__spinner"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
